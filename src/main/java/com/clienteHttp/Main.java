@@ -1,7 +1,5 @@
 package com.clienteHttp;
 
-import org.apache.commons.validator.routines.UrlValidator;
-import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -10,45 +8,37 @@ import org.jsoup.select.Elements;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Scanner;
+
 
 
 /**
  * Created by MT on 24/5/2017.
  */
 public class Main {
+
     public static void main(String[] args) throws IOException {
 
-        //String url="http://localhost:4567";
-        //String url="https://github.com";
-        //String url = capturarURL();
-        String url="https://www.spotify.com/do/signup?asignatura=practica1";
 
+        String url = capturarURL();
         Document doc = Jsoup.connect(url).get();
 
         //a)Obtener lineas.
+
         int lineas = doc.html().split("\n").length;
         System.out.println("a) Lineas: " + lineas);
 
         //b) Obtener parrafos.
-       // Elements parrafos = doc.getElementsByTag("p");
+
+       // Elements parrafos = doc.getElementsByTag("p"); //OTRA OPCION PARA RELIZAR SELECT
         Elements parrafos = doc.select("p");
         System.out.println("b) Parrafos: " + parrafos.size());
 
         //c) Obtener imagenes.
-        int img=0;
-        if(doc.getElementsByTag("p").size()!=0){
-
-            for(Element imagenes : doc.getElementsByTag("p").iterator().next().children()){
-                if(imagenes.tagName().equals("img")){
-                    img++;
-                }
-            }
-            //Elements imagenes = doc.getElementsByTag("img");
-        }
-        System.out.println("c) Imagenes: " + img);
+        Elements imagenes = doc.getElementsByTag("p").select("img");
+        System.out.println("c) Imagenes: " + imagenes.size());
 
         //d) Obtener formularios.
+
         Elements formularios = doc.getElementsByTag("form");
         int post=0, get=0;
         System.out.println("d) Total de Formularios: " + formularios.size());
@@ -62,7 +52,9 @@ public class Main {
         }
         System.out.println("\tFormularios POST:"+ post + "\n\tFormularios GET:" + get);
 
-        //e) Imputs C/ formulario.
+        //e) Imputs cada formulario.
+
+        System.out.println("e)");
         ArrayList<Elements> inputs = new ArrayList<Elements>();
 
         for (Element form : formularios) {
@@ -79,69 +71,59 @@ public class Main {
             count++;
         }
 
-        //f)
+        //Realizar POST enviando parametros.
 
-        /*
-        for(int i = 0; i < formularios.size();i++){
-            Element e = formularios.get(i);
-            //System.out.println("\tEl formulario utiliza el metodo: " + e.attr("method"));
-            if(e.attr("method").toLowerCase().equals("post")){
-                System.out.println("\tEl Formulario #"+i+":");
-                //Connection.Response res = Jsoup.connect(e.attr("action")).data("name","practica1").method(Connection.Method.POST).execute();
-                //System.out.println("\t" + res);
+        //Elements formularios = doc.select("form");
+        System.out.println("\n\nf)");
+        for(Element form : formularios){
+
+            String formAction = form.absUrl("action"), formMethod = form.attr("method");
+
+            if( formAction == "" ){
+                formAction = url;
+            }
+
+            formMethod = formMethod.toLowerCase();
+
+            if( formMethod.equals("post") ){
+
+                String userAgent = "Chromium";
+                Document d = null;
+                try {
+                    d = Jsoup.connect(formAction).data("asignatura", "practica1").userAgent(userAgent).post();
+                    String salida = d.outerHtml();
+                    System.out.println(salida);
+                } catch (Exception e1) {
+                    System.out.println("Fallo" + formAction);
+                }
 
             }
         }
-        */
-
-        respuestaServer(doc,url);
 
 
         //IMPRIME DOC HTML
         //System.out.println("\n\n" + "DOCUMENTO HTML: \n" + doc.toString());//IMPRIME EL DOCUMENTO HTML
 
     }
-    private static void respuestaServer(Document doc,String url) throws IOException {
-        Elements forms = doc.getElementsByTag("form");
-        String attrib=forms.attr("method");
-        //System.out.println(attrib);
-        if(attrib.equals("post")|| attrib.equals("POST")){
-            String action=forms.attr("action");
-            //Connection.Response response=Jsoup.connect(action).data("asignatura","practica1").userAgent("Chromium").ignoreHttpErrors(true).method(Connection.Method.POST).execute();
-            if(action.contains("http")){
-                Connection.Response response=Jsoup.connect(action).data("asignatura","practica1").userAgent("Chromium").ignoreHttpErrors(true).method(Connection.Method.POST).execute();
-                System.out.println("\nEl server dio como respuesta el Codigo-> "+response.statusCode());
-                System.out.println(response.parse());
-
-                if(response.statusCode()==200){
-                    System.out.println("\nENVIO SATISFACTORIO");
-                }
-            }else {
-                Connection.Response response=Jsoup.connect(url+action).data("asignatura","practica1").userAgent("Chromium").ignoreHttpErrors(true).method(Connection.Method.POST).execute();
-                System.out.println("\nEl server dio como respuesta el Codigo-> "+response.statusCode());
-                System.out.println(response.parse());
-                if(response.statusCode()==200){
-                    System.out.println("\nENVIO SATISFACTORIO");
-                }
-            }
-
-        }
-    }
-
-    public static String capturarURL(){
-        Scanner scanner = new Scanner(System.in);                   //QUE ES SCANER?
-        String[] schemes = {"http", "https"};                        //OJO
-        UrlValidator urlValidator = new UrlValidator(schemes);      //Verifica que URL tiene la sintaxis correcta
+    private static String capturarURL(){
         String url;
+
+        /*
+        Scanner scanner = new Scanner(System.in);
+        String[] schemes = {"http", "https"};
+        UrlValidator urlValidator = new UrlValidator(schemes);
+
         do {
-          System.out.print("Digite la URL:");
-          url = scanner.next();
-          if (!urlValidator.isValid(url))
-          System.out.println("ERROR!!!\n");
+            System.out.print("Digite la URL:");
+            url = scanner.next();
+            if (!urlValidator.isValid(url))
+                System.out.println("ERROR!!!\n");
         } while (!urlValidator.isValid(url));
         scanner.close();
+        */
+        //url="http://localhost:4567";
+        url="http://itachi.avathartech.com:4567/2017.html";
 
         return url;
     }
-
 }
